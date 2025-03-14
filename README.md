@@ -5,6 +5,6 @@ This project is designed to extend the functionality of [AccelBrain](https://git
 
 | AccelBrain Version | Branch | Describe |
 |------|---------|------|
-| 🔹 0.5.18 | [`dev_0.5.18`](https://github.com/ChangLijie/innodiskorg-accelbrain-tools-dev__confidential/tree/v0.5.18) |Enables AccelBrain to operate and interact with iVIT-T.|
+| 🔹 0.5.18 | [`dev_v0.5.18`](https://github.com/ChangLijie/innodiskorg-accelbrain-tools-dev__confidential/tree/dev_v0.5.18) |Enables AccelBrain to operate and interact with iVIT-T.|
 
 ---
