@@ -11,4 +11,4 @@ Developed based on [AccelBrain v0.5.18](https://github.com/ChangLijie/AccelBrain
 
 ## More Information
 ### 🔹 Tools Lists
-- **[iVIT-T](link)**: Enables AccelBrain to operate and interact with iVIT-T.
+- **[iVIT-T](./iVIT-T/docs/README.md)**: Enables AccelBrain to operate and interact with iVIT-T.
