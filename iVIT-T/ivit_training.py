@@ -79,6 +79,61 @@ class Tools:
 
         return __model__["info"]["base_model_id"]
 
+    def get_model_list(self, project_uuid: str) -> list:
+        """
+        Get the available training models from project_uuid.
+
+        :param project_uuid: The uuid of the project to get default training parameter for.
+        :return: A list containing the available training models if successful, or an error message.
+        """
+        url = f"{self.valves.API_BASE_URL}:{self.valves.API_PORT}/{project_uuid}/get_model"
+
+        try:
+            response = httpx.get(url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            projects = data.get("data", {})
+            if not projects:
+                return {"message": "No available model."}
+
+            # print(projects)
+            return str(projects["model"])
+
+        except httpx.RequestError as e:
+            return {"error": f"Failed to call API: {e}"}
+        except httpx.HTTPStatusError as e:
+            return {"error": f"HTTP error: {e}"}
+        except KeyError:
+            return {"error": "Response format error"}
+
+    def get_default_training_parameter(self, project_uuid: str) -> dict:
+        """
+        Get default training parameter from project_uuid.
+        :param project_uuid: The uuid of the project to get default training parameter for.
+        :return: A dict containing the training parameter if successful, or an error message.
+        """
+        url = f"{self.valves.API_BASE_URL}:{self.valves.API_PORT}/{project_uuid}/get_default_param"
+        json_data = {"training_method": "Advanced Training"}
+        try:
+            response = httpx.post(url, json=json_data)
+            response.raise_for_status()
+            data = response.json()
+
+            projects = data.get("data", {})
+            if not projects:
+                return {"message": "Can't get default training parameters."}
+
+            # print(projects)
+            return str(projects)
+
+        except httpx.RequestError as e:
+            return {"error": f"Failed to call API: {e}"}
+        except httpx.HTTPStatusError as e:
+            return {"error": f"HTTP error: {e}"}
+        except KeyError:
+            return {"error": "Response format error"}
+
     def get_ivit_project(self) -> str:
         """
         Get all projects from iVIT-T.
@@ -106,12 +161,25 @@ class Tools:
         except KeyError:
             return {"error": "Response format error"}
 
-    def training_new_iteration(self, project_name: str) -> str:
+    def training_new_iteration(
+        self,
+        project_name: str,
+        training_method: str = None,
+        model: str = None,
+        batch_size: int = None,
+        step: int = None,
+        input_shape: List[int] = None,
+    ) -> str:
         """
         Initiates a new training iteration for the specified project in iVIT-T.
 
         :param project_name: The name of the project to start a new training iteration for.
-        :return: A string containing the task UUID if successful, or an error message.
+        :param training_method: The training method (e.g., "Supervised", "Unsupervised").Default is None.
+        :param model: The model name (e.g., "ResNet50", "YOLOv5").Default is None.
+        :param batch_size: The batch size for training.Default is None.
+        :param step: The number of training steps.Default is None.
+        :param input_shape: The input shape of the model as a list [height, width, channels].Default is None.
+        :return: A string containing the task UUID if successful, or an error message.Default is None.
         """
         url = f"{self.valves.API_BASE_URL}:{self.valves.API_PORT}/training_schedule"
         projects = ast.literal_eval(self.get_ivit_project())
@@ -121,21 +189,46 @@ class Tools:
                 match_uuid = uuid
 
         if not match_uuid:
-            return "Failed to find project"
+            return "Create training parameter get error! Failed to find project"
 
-        data = {
-            "project_uuid": str(match_uuid),
-            "training_parameter": {
-                "training_method": "Quick Training",
-                "model": "yolov4-tiny",
-                "batch_size": 1,
-                "step": 10000,
-                "input_shape": [32, 32, 3],
-            },
-        }
-        training_config = TrainingConfig(**data)
+        default_parameter = ast.literal_eval(
+            self.get_default_training_parameter(project_uuid=str(match_uuid))
+        )
+
+        available_model = ast.literal_eval(
+            self.get_model_list(project_uuid=str(match_uuid))
+        )
+        if model not in available_model:
+            model = default_parameter["training_param"]["model"]
+            print(
+                f"Model not support on the project {project_name}, Change model to {model}"
+            )
+
+        try:
+            data = {
+                "project_uuid": str(match_uuid),
+                "training_parameter": {
+                    "training_method": "Quick Training",
+                    "model": model,
+                    "batch_size": batch_size
+                    if isinstance(batch_size, int)
+                    else default_parameter["training_param"]["batch_size"],
+                    "step": step
+                    if isinstance(step, int)
+                    else default_parameter["training_param"]["step"],
+                    "input_shape": input_shape
+                    if isinstance(input_shape, list)
+                    and len(input_shape) == 3
+                    and all(isinstance(i, int) and i > 0 for i in input_shape)
+                    else default_parameter["training_param"]["input_shape"],
+                },
+            }
+            training_config = TrainingConfig(**data)
+        except:
+            return "Create training parameter get error! So stop create new training task , please check!"
         json_data = training_config.model_dump()
-        print(f"\n\n\n\n {data}\n\n\n\n")
+        print(f"\n\n\n\n Training parameter : \n\n\n\n{data}\n\n\n\n")
+
         response = httpx.post(url, json=json_data)
         if response.status_code == 200:
             response_data = response.json()
@@ -146,13 +239,17 @@ class Tools:
                 )
                 return f"The training has been successfully submitted to iVIT-T. The generated Task UUID is {task_uuid}."
             else:
-                print(f"Request failed: {response_data.get('message')}")
-                return f"Request failed: {response_data.get('message')}"
+                print(
+                    f"Create training parameter get error! Request failed: {response_data.get('message')}"
+                )
+                return f"Create training parameter get error! Request failed: {response_data.get('message')}"
         else:
-            print(f"HTTP Error: {response.status_code}")
-            return f"HTTP Error: {response.status_code}"
+            print(
+                f"Create training parameter get error! HTTP Error: {response.status_code}"
+            )
+            return f"Create training parameter get error!HTTP Error: {response.status_code}"
 
 
 if __name__ == "__main__":
     tools = Tools()
-    print(tools.training_new_iteration(project_name="fruit_object_detection"))
+    tools.training_new_iteration(project_name="fruit_object_detection")
