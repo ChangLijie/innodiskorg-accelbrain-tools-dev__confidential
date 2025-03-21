@@ -114,7 +114,7 @@ class Tools:
         :return: A dict containing the training parameter if successful, or an error message.
         """
         url = f"{self.valves.API_BASE_URL}:{self.valves.API_PORT}/{project_uuid}/get_default_param"
-        json_data = {"training_method": "Advanced Training"}
+        json_data = {"training_method": "Quick Training"}
         try:
             response = httpx.post(url, json=json_data)
             response.raise_for_status()
@@ -164,22 +164,21 @@ class Tools:
     def training_new_iteration(
         self,
         project_name: str,
-        training_method: str = None,
-        model: str = None,
-        batch_size: int = None,
-        step: int = None,
-        input_shape: List[int] = None,
+        batch_size: int,
+        model: str,
+        step: int,
+        input_shape: List[int],
     ) -> str:
         """
         Initiates a new training iteration for the specified project in iVIT-T.
 
         :param project_name: The name of the project to start a new training iteration for.
-        :param training_method: The training method (e.g., "Supervised", "Unsupervised").Default is None.
-        :param model: The model name (e.g., "ResNet50", "YOLOv5").Default is None.
-        :param batch_size: The batch size for training.Default is None.
-        :param step: The number of training steps.Default is None.
-        :param input_shape: The input shape of the model as a list [height, width, channels].Default is None.
-        :return: A string containing the task UUID if successful, or an error message.Default is None.
+        :param batch_size: The batch size for training.
+        :param model: The model name (e.g., "ResNet50", "YOLOv5").
+
+        :param step: The number of training steps.
+        :param input_shape: The input shape of the model as a list [height, width, channels].
+        :return: A string containing the task UUID if successful, or an error message.
         """
         url = f"{self.valves.API_BASE_URL}:{self.valves.API_PORT}/training_schedule"
         projects = ast.literal_eval(self.get_ivit_project())
@@ -198,6 +197,26 @@ class Tools:
         available_model = ast.literal_eval(
             self.get_model_list(project_uuid=str(match_uuid))
         )
+        try:
+            batch_size = int(batch_size)
+        except:
+            batch_size = None
+
+        try:
+            model = str(batch_size)
+        except:
+            model = None
+
+        try:
+            step = int(step)
+        except:
+            step = None
+
+        try:
+            input_shape = ast.literal_eval(input_shape)
+        except:
+            input_shape = None
+
         if model not in available_model:
             model = default_parameter["training_param"]["model"]
             print(
@@ -210,17 +229,23 @@ class Tools:
                 "training_parameter": {
                     "training_method": "Quick Training",
                     "model": model,
-                    "batch_size": batch_size
-                    if isinstance(batch_size, int)
-                    else default_parameter["training_param"]["batch_size"],
-                    "step": step
-                    if isinstance(step, int)
-                    else default_parameter["training_param"]["step"],
-                    "input_shape": input_shape
-                    if isinstance(input_shape, list)
-                    and len(input_shape) == 3
-                    and all(isinstance(i, int) and i > 0 for i in input_shape)
-                    else default_parameter["training_param"]["input_shape"],
+                    "batch_size": (
+                        batch_size
+                        if isinstance(batch_size, int) and batch_size > 0
+                        else 1
+                    ),
+                    "step": (
+                        step
+                        if isinstance(step, int) and step > 0
+                        else default_parameter["training_param"]["step"]
+                    ),
+                    "input_shape": (
+                        input_shape
+                        if isinstance(input_shape, list)
+                        and len(input_shape) == 3
+                        and all(isinstance(i, int) and i > 0 for i in input_shape)
+                        else default_parameter["training_param"]["input_shape"]
+                    ),
                 },
             }
             training_config = TrainingConfig(**data)
