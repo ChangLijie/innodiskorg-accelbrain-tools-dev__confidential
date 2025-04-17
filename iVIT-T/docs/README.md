@@ -1,5 +1,5 @@
 # Introduction
-Developed based on [AccelBrain v0.5.18](https://github.com/ChangLijie/AccelBrain-dev__confidential), this project extends the functionality of the Agent.
+Developed based on [AccelBrain v1.0](https://github.com/ChangLijie/AccelBrain-dev__confidential), this project extends the functionality of the Agent.
 ## Feature about iVIT-T tools
 - **get_ivit_project** : Can get all the project information from iVIT-T.
 - **ivit_training**: Allows users to configure training parameters via chat and start the training service on iVIT-T.

@@ -1,5 +1,5 @@
 # Introduction
-Developed based on [AccelBrain v0.5.18](https://github.com/ChangLijie/AccelBrain-dev__confidential), this project extends the functionality of the Agent.
+Developed based on [AccelBrain v1.0](https://github.com/ChangLijie/AccelBrain-dev__confidential), this project extends the functionality of the Agent.
 
 ## Deployment
 1. **Login to AccelBrain** (with root user)  
