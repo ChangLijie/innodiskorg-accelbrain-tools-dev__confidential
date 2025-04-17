@@ -1,6 +1,6 @@
 """
 author: Jay
-version: 0.5.18
+version: 1.0
 licence: MIT
 """
 
